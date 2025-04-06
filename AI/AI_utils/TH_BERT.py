@@ -77,7 +77,7 @@ class BERTClass(torch.nn.Module):
         # _, output_1 = self.l1(**x, return_dict=False)
     def forward(self, input_ids, attention_mask, token_type_ids):
         # _, output_1 = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
-        _, output_1, _ = self.l1(input_ids[0], attention_mask=attention_mask[0], token_type_ids=token_type_ids[0], return_dict=False)
+        _, output_1, _ = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
         output_2 = self.l2(output_1)
         output = self.l3(output_2)
         return output
