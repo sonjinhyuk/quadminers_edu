@@ -139,7 +139,7 @@ def decode_payload(port, payload):
         elif (b"* OK" in payload and b"IMAP" in payload)or (b"eastex.net modusMail IMAP4S" in payload) or (b"SMTP" in payload and b"mail.smartinternz.com" in payload) or\
             (b"25mc" in payload or b"gSlz!8q1F9" in payload):
             return "IMAPS"  # TLS로 감싼 IMAP 서비스
-            # ✅ TLS/PKI 감지 (OCSP, CRL 및 X.509 인증서 관련 데이터)
+            #  TLS/PKI 감지 (OCSP, CRL 및 X.509 인증서 관련 데이터)
 
         # SMTP 감지 (Mail Transfer Traffic)
         elif any(cmd in payload for cmd in [b'220 ', b'250 ', b'354 ', b'221 ', b'500 ', b'550 ', b'RCPT TO:', b'DATA', b'smtp', b"SMTP"]) or payload.startswith(b'421') :
@@ -159,7 +159,7 @@ def decode_payload(port, payload):
         # elif header[:3] in [b'\x05\x00\x0b', b'\x05\x00\x0c']:
         elif header[:2] in [b'\x05\x00', b'\x04\x00']:
             return 135  # DCE/RPC Bind Request
-            # ✅ RPCBind 감지 (Sun RPC, Port 111)
+            #  RPCBind 감지 (Sun RPC, Port 111)
         # Kerberos 감지 (Port 88, ASN.1 구조 및 LDAP 연계 확인)
         elif header[:1] in [b'\xa0', b'\x60', b'\x6e', b'\x03'] and (
                 b'1.2.840.113554.1.2.2' in payload or b'krb' in payload or b'\xa1' in payload):
@@ -396,11 +396,11 @@ def decode_smtp(payload):
     SMTP 이메일 트래픽을 분석하고, 사람이 읽을 수 있도록 디코딩하는 함수
     """
     try:
-        # ✅ SMTP 응답 코드 확인
+        # SMTP 응답 코드 확인
         smtp_responses = re.findall(rb"(\d{3} .+)", payload)
         smtp_response_text = "\n".join([resp.decode(errors="ignore") for resp in smtp_responses])
 
-        # ✅ 이메일 헤더 추출
+        #이메일 헤더 추출
         email_from = re.search(rb"From:\s?(.+)", payload)
         email_to = re.search(rb"To:\s?(.+)", payload)
         email_subject = re.search(rb"Subject:\s?(.+)", payload)
@@ -409,11 +409,11 @@ def decode_smtp(payload):
         to_text = email_to.group(1).decode(errors="ignore") if email_to else "N/A"
         subject_text = email_subject.group(1).decode(errors="ignore") if email_subject else "N/A"
 
-        # ✅ 피싱 링크 확인
+        #  피싱 링크 확인
         phishing_links = re.findall(rb"http[s]?://[^\s]+", payload)
         phishing_links_text = "\n".join([link.decode(errors="ignore") for link in phishing_links])
 
-        # ✅ Base64 및 quoted-printable 데이터 디코딩
+        #  Base64 및 quoted-printable 데이터 디코딩
         # decoded_body = quopri.decodestring(payload).decode(errors="ignore")
         decoded_body = bts(payload)
 
@@ -482,11 +482,9 @@ def decode_smtp_response(payload):
     except Exception as e:
         return f"Decoding Error: {str(e)}"
 
-# 5. 이메일 프로토콜 (IMAP/POP3)
 def decode_email(data):
     return data.decode('utf-8', errors='ignore')
 
-# 6. DHCP 디코딩
 def decode_dhcp(data):
     try:
         op = data[0]
@@ -561,7 +559,7 @@ def decode_snmp(data):
     try:
         results = (
             f"Detected Protocol: SNMP\n"
-            f"SNMP SMB Data: {binascii.hexlify(data).decode()}\n"
+            f"SNMP SNMP Data: {binascii.hexlify(data).decode()}\n"
             f"Readable ASCII Data: {bts(data)}"
         )
         return results
@@ -820,6 +818,7 @@ def parse_domain_name(payload, offset):
         offset += length + 1  # 다음 필드로 이동
 
     return ".".join(labels), offset
+
 def decode_ldap(payload):
     """
     LDAP 패킷을 디코딩하는 함수
@@ -964,19 +963,19 @@ def decode_kerberos(payload):
     - ASN.1 구조 기반으로 패킷을 분석하여 사람이 읽을 수 있도록 변환
     """
     try:
-        # ✅ ASN.1 구조에서 타임스탬프 패턴 찾기 (YYYYMMDDHHMMSSZ)
+        #  ASN.1 구조에서 타임스탬프 패턴 찾기 (YYYYMMDDHHMMSSZ)
         timestamp_match = re.search(rb"(\d{14}Z)", payload)
         timestamp = timestamp_match.group(1).decode() if timestamp_match else "N/A"
 
-        # ✅ 도메인 정보 추출
+        #  도메인 정보 추출
         domain_pattern = re.compile(rb"([a-zA-Z0-9.-]+)\x00?")
         domain_matches = domain_pattern.findall(payload)
         domain_info = [match.decode(errors="ignore") for match in domain_matches]
 
-        # ✅ HEX 변환 (암호화된 티켓 또는 LDAP 응답 포함 가능)
+        #  HEX 변환 (암호화된 티켓 또는 LDAP 응답 포함 가능)
         hex_data = bytes_to_str_32126(payload, "kerberos")
 
-        # ✅ 패킷 유형 판별 (Kerberos 또는 LDAP)
+        #  패킷 유형 판별 (Kerberos 또는 LDAP)
         if b'1.2.840.113556' in payload or b'ldap' in payload:
             protocol_type = "LDAP"
         elif timestamp != "N/A":  # Kerberos 티켓 요청 또는 응답 패킷
@@ -1002,17 +1001,17 @@ def decode_tls_or_pki(data):
     TLS/SSL 인증 데이터 또는 ASN.1 DER 인코딩 패킷을 디코딩하는 함수
     """
     try:
-        # ✅ OCSP 및 CRL URL 확인 (TLS 인증서 검증 과정 가능성 탐색)
+        #  OCSP 및 CRL URL 확인 (TLS 인증서 검증 과정 가능성 탐색)
         ocsp_match = re.search(rb"(http://[a-zA-Z0-9./-]+)", data)
         ocsp_url = ocsp_match.group(1).decode() if ocsp_match else "N/A"
 
         crl_match = re.search(rb"(http://[a-zA-Z0-9./-]+\.crl)", data)
         crl_url = crl_match.group(1).decode() if crl_match else "N/A"
 
-        # ✅ HEX 변환 (암호화된 서명 또는 키가 포함될 가능성 있음)
+        #  HEX 변환 (암호화된 서명 또는 키가 포함될 가능성 있음)
         decoded = bytes_to_str_32126(data, "tls")
 
-        # ✅ 랜덤성 분석 → 암호화 가능성 탐색
+        #  랜덤성 분석 → 암호화 가능성 탐색
         encryption_status = "Possibly Encrypted" if len(set(data)) > 100 else "Not Encrypted"
 
         result = (
@@ -1179,20 +1178,20 @@ def decode_ethereum_devp2p(payload):
     - 암호화 여부 분석
     """
     try:
-        # ✅ Entropy 계산
+        #  Entropy 계산
         entropy = calculate_entropy(payload)
 
-        # ✅ 사람이 읽을 수 있는 ASCII 문자열 변환
+        #  사람이 읽을 수 있는 ASCII 문자열 변환
         readable_data = "".join(chr(b) if 32 <= b <= 126 else "." for b in payload)
 
-        # ✅ HEX 변환 (바이너리 데이터 포함 가능)
+        #  HEX 변환 (바이너리 데이터 포함 가능)
         hex_data = binascii.hexlify(payload).decode(errors="ignore")
 
-        # ✅ 이더리움 DevP2P(30301 포트) 가능성 체크
+        #  이더리움 DevP2P(30301 포트) 가능성 체크
         ethereum_p2p_keywords = [b"discovery", b"Ethereum", b"devp2p", b"hello"]
         is_ethereum_p2p = any(keyword in payload for keyword in ethereum_p2p_keywords)
 
-        # ✅ 암호화 가능성 판별
+        #  암호화 가능성 판별
         encryption_status = "Possibly Encrypted" if entropy > 7.5 else "Possibly Structured Data"
 
         result = (
@@ -1212,13 +1211,13 @@ def decode_sip(payload):
     SIP(Session Initiation Protocol) 패킷을 디코딩하는 함수
     """
     try:
-        # ✅ SIP 패킷을 UTF-8로 디코딩 (텍스트 기반)
+        #  SIP 패킷을 UTF-8로 디코딩 (텍스트 기반)
         sip_message = payload.decode("utf-8", errors="ignore")
 
-        # ✅ 첫 줄 (SIP 요청 또는 응답 라인) 추출
+        #  첫 줄 (SIP 요청 또는 응답 라인) 추출
         first_line = sip_message.split("\r\n")[0]
 
-        # ✅ 주요 SIP 헤더 필드 정규식
+        #  주요 SIP 헤더 필드 정규식
         sip_headers = {
             "Method": re.search(r"^(INVITE|ACK|OPTIONS|BYE|CANCEL|REGISTER|INFO|PRACK|UPDATE|SUBSCRIBE|NOTIFY|PUBLISH|MESSAGE|REFER) ", first_line),
             "Response": re.search(r"^SIP/2.0 (\d{3}) (.+)", first_line),
@@ -1230,7 +1229,7 @@ def decode_sip(payload):
             "Content-Length": re.search(r"Content-Length: (\d+)", sip_message)
         }
 
-        # ✅ SIP 메시지 유형 확인
+        #  SIP 메시지 유형 확인
         if sip_headers["Method"]:
             sip_type = f"SIP Request {sip_headers['Method'].group(1)}"
         elif sip_headers["Response"]:
@@ -1239,7 +1238,7 @@ def decode_sip(payload):
             sip_type = "Unknown SIP Message"
 
         decoded = bts(payload)
-        # ✅ SIP 메시지 정리
+        #  SIP 메시지 정리
         result = (
             f"Detected Protocol: SIP\n"
             f"Message Type: {sip_type}\n"
@@ -1263,10 +1262,10 @@ def decode_irc(payload):
     IRC (Internet Relay Chat) 패킷을 디코딩하는 함수
     """
     try:
-        # ✅ IRC 메시지를 UTF-8로 디코딩 (텍스트 기반)
+        #  IRC 메시지를 UTF-8로 디코딩 (텍스트 기반)
         irc_message = payload.decode("utf-8", errors="ignore")
         decoded = bts(payload)
-        # ✅ 주요 IRC 명령어 및 정보 추출
+        #  주요 IRC 명령어 및 정보 추출
         irc_data = {
             "Nick": re.findall(r"NICK (\S+)", irc_message),
             "Join": re.findall(r"JOIN :(\S+)", irc_message),
@@ -1274,7 +1273,7 @@ def decode_irc(payload):
             "Quit": re.findall(r"QUIT :(.*)", irc_message)
         }
 
-        # ✅ PRIVMSG에서 감염된 PC 정보 추출
+        #  PRIVMSG에서 감염된 PC 정보 추출
         system_info = []
         for _, msg in irc_data["PrivMsg"]:
             info_match = re.findall(r"\|!\|Info\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!\|(.+?)\|!", msg)
@@ -1315,7 +1314,7 @@ def decode_bittorrent_dht(payload):
 
         def to_hex(s): return binascii.hexlify(s.encode("latin1")).decode()
 
-        result = f"BitTorrent Traffic Detected\n"
+        result = f"Detected Protocol: BitTorrent Traffic Detected\n"
 
         if query:
             result += f"DHT Query: {query.group(1)}\n"
@@ -1347,6 +1346,7 @@ def decode_whois(payload, port=43):
         decoded = bts(payload)
         result_lines.append(f"Readable ASCII Data: {decoded}")
         return (
+            f"Detected Protocol: WHOIS\n" +
             f"WHOIS Response (Port: {port})\n" +
             "\n".join(result_lines) # 너무 길 경우 일부만 출력
         )
@@ -1359,7 +1359,7 @@ def decode_bot(payload, port=None):
     try:
         ascii_preview = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in payload)
         return (
-            f"Custom C2/Bot Protocol Detected (Port {port})\n"
+            f"Detected Protocol: Custom C2/Bot(Port {port})\n"
             f"Length: {len(payload)} bytes\n"
             f"ASCII Preview: {ascii_preview[:100]}\n"
             f"Notable Tokens: {[t for t in ['gPa', 'As0d', 'Kn,', 'tkA'] if t.encode() in payload]}"
@@ -1484,6 +1484,7 @@ def decode_custom_base64_chunks(payload: bytes) -> str:
         )
     except Exception as e:
         return f"Failed to decode payload: {e}"
+
 def decode_mqtt(payload):
     """
     MQTT 패킷 디코딩 함수 (기본 CONNECT 메시지 기반)

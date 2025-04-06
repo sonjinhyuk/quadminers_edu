@@ -1,7 +1,7 @@
 import shutil
 
 from data_preprocess.pre_utils.cicflowmeter.flow_session import generate_session_class
-from utils import create_directory
+from pre_utils import create_directory
 from scapy.sessions import DefaultSession
 from scapy.utils import PcapReader, tcpdump
 from scapy.interfaces import (
@@ -125,7 +125,6 @@ def run_param(param):
         if len(session.flows) > 0:
             session.garbage_collect(None)
         shutil.move(temp_file, output_file)
-        # session.df.to_csv(output_file, index=False)
     except KeyboardInterrupt:
         os.remove(temp_file)
         pass
@@ -142,32 +141,31 @@ def run_param(param):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pcap_dir', default='/home/data5/jhson21/threatattack/attack_data_pcap/'
-                                              '04.brute_force_web'
-                                              '/sessions', type=str)
-    parser.add_argument('--output_dir', default="/home/data3/jhson21/cicdis/result/", type=str)
+    parser.add_argument('--pcap_dir', default='../pcaps/', type=str)
+    parser.add_argument('--output_dir', default="../data/post/", type=str)
     parser.add_argument('--pass_count', default=0, type=int)
+    parser.add_argument('--mode', default='file', type=str)
+    parser.add_argument('--temp_dir', default="/tmp/threatattack/", type=str)
+    parser.add_argument('--input_file', default="HTTPS_practice.pcap", type=str)
+    parser.add_argument('--multiprocess', action='store_true')
     args = parser.parse_args()
     pcap_dir = args.pcap_dir
     output_dir = args.output_dir
+    temp_dir = args.temp_dir
+    mode = args.mode
     out_dir = output_dir
     create_directory(out_dir)
     num_cores = multiprocessing.cpu_count()
-
-    paths = Path(pcap_dir).rglob("**/*.pcap")
-    newp = []
-    args = parser.parse_args()
+    param_list = []
     input_interface = None
     output_mode = 'flow'
     url_model = ""
-    param_list = []
-    temp_dir = "/tmp/threatattack/"
-    for path in tqdm(paths, leave=False):
-        infile = str(path)
-        pcap_name = path.stem
+
+    if mode == 'file':
+        input_file = args.input_file
+        pcap_name = input_file.split(".")[0]
+        infile = f"{pcap_dir}{input_file}"
         output = f"{out_dir}{pcap_name}.csv"
-        if os.path.exists(output):
-            continue
         temp_dict = {
             "infile": infile,
             "output_mode": output_mode,
@@ -176,5 +174,25 @@ if __name__ == "__main__":
             "temp_file": f"{temp_dir}{pcap_name}.csv"
         }
         param_list.append(temp_dict)
-        run_param(temp_dict)
+    else:
+        paths = Path(pcap_dir).rglob("**/*.pcap")
+        newp = []
+        args = parser.parse_args()
+
+        for path in tqdm(paths, leave=False):
+            infile = str(path)
+            pcap_name = path.stem
+            output = f"{out_dir}{pcap_name}.csv"
+            if os.path.exists(output):
+                continue
+            temp_dict = {
+                "infile": infile,
+                "output_mode": output_mode,
+                "output": output,
+                "url_model": url_model,
+                "temp_file": f"{temp_dir}{pcap_name}.csv"
+            }
+            param_list.append(temp_dict)
+    for param in tqdm(param_list):
+        run_param(param)
         # parmap.map(run_param, param_list, pm_pbar=True, pm_processes=num_cores//2)

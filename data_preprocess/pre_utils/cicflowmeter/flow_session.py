@@ -8,7 +8,7 @@ from scapy.sessions import DefaultSession
 from .features.context.packet_direction import PacketDirection
 from .features.context.packet_flow_key import get_packet_flow_key
 from .flow import Flow
-from utils.payload_decoding import decode_payload
+from data_preprocess.pre_utils.payload_decoding import decode_payload
 
 EXPIRED_UPDATE = 40
 MACHINE_LEARNING_API = "http://localhost:8000/predict"
@@ -114,9 +114,6 @@ class FlowSession(DefaultSession):
 
         flow.add_packet(packet, direction)
 
-        # if not self.url_model:
-        #     GARBAGE_COLLECT_PACKETS = 10000
-
         if self.packets_count % GARBAGE_COLLECT_PACKETS == 0 or (
             flow.duration > 120 and self.output_mode == "flow"
         ):
@@ -138,22 +135,6 @@ class FlowSession(DefaultSession):
                  "Windows-CMD-Obfuscated", "VNC", "Windows-DLL-Exec",
                  "CUSTOM_POWERSHELL_C2", "custom_domain_tunnel"
                  "CustomC2-Base64", "custom_domain_tunnel", "TDS", "PRINTER"]
-        output_name = self.output_file.split("/")[-1]
-        continue_files = [
-            "2024-08-30-approximately-11-days-of-server-scans-and-probes.csv",
-            "2023-MTA-workshop-server-probes-part-2-of-2.csv",
-            "2022-MTA-workshop-webserver-scanning-1-of-2.csv",
-            "2023-MTA-workshop-server-probes-part-1-of-2.csv",
-            "2022-01-03-three-days-of-server-probes-including-log4j-attempts.csv",
-            "2022-09-30-fifteen-days-of-webserver-scans-and-probes.csv",
-            "2021-12-20-five-days-of-server-traffic-including-log4j-attempts.csv",
-            "2022-MTA-workshop-webserver-scanning-2-of-2.csv",
-            "2022-09-15-thirteen-days-of-webserver-scans-and-probes.csv",
-            '2024-07-23-eight-days-of-server-scans-and-probes.csv',
-            '2024-09-12-approximately-11-days-of-server-scans-and-probes.csv',
-            '2022-MTA-workshop-block-3-01.csv',
-            '2018-06-29-Rig-EK.csv',
-        ]
         for k in keys:
             flow = self.flows.get(k)
             if (
@@ -167,7 +148,7 @@ class FlowSession(DefaultSession):
                 if len(payload) < 50:
                     decoded = ""
                     port = dport
-                else:##decode_payload가 매우 느림 왜일까 쳌 --> 해결
+                else:
                     decoded, port = decode_payload(dport, payload)
                     try:
                         readable = decoded.split("Readable ASCII Data:")[-1]
@@ -184,11 +165,8 @@ class FlowSession(DefaultSession):
                 if self.csv_line == 0:
                     self.csv_writer.writerow(flow_data.keys())
                 self.csv_writer.writerow(flow_data.values())
-                # self.df = pd.concat([self.df, pd.DataFrame(flow_data, index=[self.csv_line])])
                 self.csv_line += 1
                 del self.flows[k]
-        # if not self.url_model:
-        #     print("Garbage Collection Finished. Flows = {}".format(len(self.flows)))
 
 
 def generate_session_class(output_mode, output_file, url_model):
