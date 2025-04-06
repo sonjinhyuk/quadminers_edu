@@ -1,14 +1,12 @@
-from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
-# from sitepacages.transformers import BertTokenizer, BertForQuestionAnswering, BertModel, BertConfig
-# from sitepacages.transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import BertTokenizer, BertForQuestionAnswering, BertModel, BertConfig
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn as nn
 from tqdm import tqdm
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, auc, roc_auc_score, classification_report
+from sklearn.utils.class_weight import compute_class_weight
 
 # Defining some key variables that will be used later on in the training
 MAX_LEN = 200
@@ -79,7 +77,7 @@ class BERTClass(torch.nn.Module):
         # _, output_1 = self.l1(**x, return_dict=False)
     def forward(self, input_ids, attention_mask, token_type_ids):
         # _, output_1 = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
-        _, output_1, _ = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
+        _, output_1, _ = self.l1(input_ids[0], attention_mask=attention_mask[0], token_type_ids=token_type_ids[0], return_dict=False)
         output_2 = self.l2(output_1)
         output = self.l3(output_2)
         return output
@@ -289,17 +287,6 @@ class Custominference(Dataset):
         }
 
 
-
-#bert 관련 코드
-# def setting_bert_model(device, bert_model_path=None):
-#     if bert_model_path is None:
-#         model = BERTClass()
-#         model.to(device)
-#     else:
-#         model = BERTClass().to(device)
-#         model.load_state_dict(torch.load(f'{bert_model_path}', map_location=device))
-#     return model
-
 def setting_bert_model(device, bert_model_path=None, output_numbers=13):
     if bert_model_path is None:
         model = BERTClass(output_numbers=output_numbers)
@@ -501,9 +488,15 @@ def bert_training(device, datas, model_output,
     best_loss = 1000000000
     best_f1 = 0
     best_acc = 0
+
+    ### Optimizer setting
+    # class_weights = compute_class_weight(class_weight='balanced', classes=[i for i in range(output_numbers)], y=train_labels)
+    # weights = torch.tensor(class_weights, dtype=torch.float)
+    # loss_fn = nn.CrossEntropyLoss(weights=weights.to(device))
+
     loss_fn = nn.CrossEntropyLoss()
     for epoch in tqdm(range(EPOCHS)):
-        loss_result, acc, pre, recall, f1, cm = train(bert_model, training_loader, epoch=epoch, optimizer=optimizer, device=device, loss_fn=nn.CrossEntropyLoss())
+        loss_result, acc, pre, recall, f1, cm = train(bert_model, training_loader, epoch=epoch, optimizer=optimizer, device=device, loss_fn=loss_fn)
         outputs, targets, _, _ = validation_bert(bert_model, testing_loader, device=device)
         test_acc = accuracy_score(targets, outputs)
         test_f1 = f1_score(targets, outputs, average='macro')
@@ -525,6 +518,14 @@ def bert_training(device, datas, model_output,
             "tr_accuracy": acc, "tr_loss": loss_result, "tr_f1": f1,
             "test_accuracy": test_acc, "test_f1": test_f1
         })
+    # Excel로 저장
+    # with pd.ExcelWriter("../model_evaluation_results_xgboost.xlsx") as writer:
+    #     tr_result_df.to_excel(writer, sheet_name="Train Results", index=False)
+    #     te_result_df.to_excel(writer, sheet_name="Test Results", index=False)
+    #     tr_cm_df.to_excel(writer, sheet_name="Train Confusion Matrix")
+    #     te_cm_df.to_excel(writer, sheet_name="Test Confusion Matrix")
+    # print(f"train accuracy: {tr_result[0]}\n train f1_score: {tr_result[-1]}\n train confusion matrix: {tr_cm}")
+    # print(f"test accuracy: {te_result[0]}\n test f1_score: {te_result[-1]}\n test confusion matrix: {te_cm}")
     torch.save(bert_model.state_dict(), f'{bert_model_output}.pth')
 
 def bert_MLP_training(device, nlp_data, tabular_data, train_indexs, test_indexs, train_labels, test_labels, model_output,
