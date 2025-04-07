@@ -2,12 +2,11 @@ import os
 import math
 import shap
 import torch
-from utils.bert_util import MAX_LEN
+from XAI.xai_utils.bert_util import MAX_LEN
 import numpy as np
 from shap.maskers._text import TokenGroup, Token
 import pandas as pd
 import json
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 def get_tokenized_data(tokenizer, input_text):
@@ -33,11 +32,8 @@ def get_tokenized_data(tokenizer, input_text):
 
 def post_process_shap_value(shap_values, new_word_index, token, tokenizer, output_names, device):
     def partition_tree(decoded_tokens, tokenizer, special_tokens=None):
-        def merge_score(group1, group2, special_tokens):
-            """Compute the score of merging two token groups.
 
-            special_tokens: tokens (such as separator tokens) that should be grouped last
-            """
+        def merge_score(group1, group2, special_tokens):
             score = 0
 
             # ensures special tokens are combined last, so 1st subtree is 1st sentence and 2nd subtree is 2nd sentence

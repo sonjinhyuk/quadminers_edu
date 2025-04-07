@@ -1,12 +1,9 @@
 import os
 import torch
-import argparse
-import numpy as np
 from transformers import BertTokenizer
 from lime.lime_text import LimeTextExplainer
 from functools import partial
-from AI_utils import create_directory, data_load, set_device, setting_bert_model
-from AI_utils.TH_BERT import bert_training, bert_MLP_training
+from AI_utils import data_load, set_device, setting_bert_model
 from XAI.xai_utils import argparse_xai
 
 def predict_prob_(texts, model, tokenizer, max_len, device):

@@ -100,6 +100,17 @@ class BERTbinaryClass(torch.nn.Module):
         self.l3 = torch.nn.Linear(768, 2)  # 5
 
     def forward(self, input_ids, attention_mask, token_type_ids):
+        """
+        Perform a forward pass through the BERT model.
+
+        Args:
+            input_ids (torch.Tensor): Tensor of input IDs with shape (batch_size, sequence_length).
+            attention_mask (torch.Tensor): Tensor of attention masks with shape (batch_size, sequence_length).
+            token_type_ids (torch.Tensor): Tensor of token type IDs with shape (batch_size, sequence_length).
+
+        Returns:
+            torch.Tensor: The output logits from the final linear layer, with shape (batch_size, num_labels).
+        """
         _, output_1 = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
         output_2 = self.l2(output_1)
         output = self.l3(output_2)
