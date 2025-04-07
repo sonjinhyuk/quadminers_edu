@@ -2,6 +2,27 @@
 <project version="4">
   <component name="PublishConfigData" autoUpload="Always" serverName="jhson21@221.145.183.150:52222 key" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
+      <paths name="classact@localhost:10000 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="classact@localhost:10000 password (1)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="classact@localhost:10000 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="classsact">
         <serverdata>
           <mappings>
@@ -16,10 +37,24 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="jhson21@221.145.183.150:52222 key">
+      <paths name="jhson21@143.248.208.37:2222 password (1)">
         <serverdata>
           <mappings>
             <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jhson21@221.145.183.150:52222 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/data4/jhson21/quadminers" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jhson21@221.145.183.150:52222 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/data4/jhson21/quadminers" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
