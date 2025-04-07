@@ -195,4 +195,4 @@ if __name__ == "__main__":
             param_list.append(temp_dict)
     for param in tqdm(param_list):
         run_param(param)
-        # parmap.map(run_param, param_list, pm_pbar=True, pm_processes=num_cores//2)
+    # parmap.map(run_param, param_list, pm_pbar=True, pm_processes=num_cores//2)
