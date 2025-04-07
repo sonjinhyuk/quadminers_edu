@@ -39,9 +39,6 @@ def main(arg):
                 model_dir = model_dir.replace("../", "")
                 model_path = f"{model_dir}/{model_name}_{tmt}.pkl"
                 model = load(open(model_path, "rb"))
-
-            # except
-
             evaluate_xgboost(tabular_X_test, tabular_y_test, model, model_name)
         elif 'bert' in tmt or 'NLP' in tmt:
             # evaluate_bert(test_loader, model, output_path_prefix, device="cuda"):

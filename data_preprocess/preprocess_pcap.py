@@ -193,6 +193,6 @@ if __name__ == "__main__":
                 "temp_file": f"{temp_dir}{pcap_name}.csv"
             }
             param_list.append(temp_dict)
-        for param in tqdm(param_list):
-            run_param(param)
-        # parmap.map(run_param, param_list, pm_pbar=True, pm_processes=num_cores//2)
+    for param in tqdm(param_list):
+        run_param(param)
+    # parmap.map(run_param, param_list, pm_pbar=True, pm_processes=num_cores//2)
