@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="jhson21@221.145.183.150:52222 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
+    <serverData>
+      <paths name="jhson21@221.145.183.150:52222 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/data4/jhson21/quadminers" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="jhson21@221.145.183.150:52222 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/data4/jhson21/quadminers" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
