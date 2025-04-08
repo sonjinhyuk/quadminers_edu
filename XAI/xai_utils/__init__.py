@@ -12,6 +12,7 @@ def argparse_xai():
     parser.add_argument('--model_name', default='quadminers_edu', type=str, help='model name')
     parser.add_argument('--random_seed', default=42, type=int, help='random seed for train test split')
     parser.add_argument('--MAXLEN', default=-1, type=int, help='max length for bert input')
+    parser.add_argument('--captum_method', default="ig", type=str, help='max length for bert input')
 
     args = parser.parse_args()
     return args

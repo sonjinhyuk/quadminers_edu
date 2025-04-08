@@ -2,7 +2,7 @@ from functools import wraps
 from time import time
 import pandas as pd
 import numpy as np
-from AI_utils.TH_BERT import BERTClass
+from AI.AI_utils.TH_BERT import BERTClass
 import xgboost as xgb
 import torch
 from tqdm import tqdm
@@ -12,13 +12,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, \
     classification_report
 import os
-from AI_utils.TH_BERT import CustomDataset, setting_bert_model, validation_bert
+from AI.AI_utils.TH_BERT import CustomDataset, setting_bert_model, validation_bert, setting_bert_model_captum
 from transformers import BertTokenizer
 from torch.utils.data import DataLoader
 def set_device(gpu):
-    # os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Set the GPU 2 to use
-    # device = torch.device(f"cuda:{gpu}") if torch.cuda.is_available() else torch.device("cpu")
-    device = 'cpu'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Set the GPU 2 to use
+    device = torch.device(f"cuda:{gpu}") if torch.cuda.is_available() else torch.device("cpu")
     return device
 
 require_columns = ["src_port", "dst_port", "flow_duration", "tot_fwd_pkts", "tot_bwd_pkts", "totlen_fwd_pkts", "totlen_bwd_pkts", "fwd_pkt_len_max", "fwd_pkt_len_min", "fwd_pkt_len_mean", "fwd_pkt_len_std", "bwd_pkt_len_max", "bwd_pkt_len_min", "bwd_pkt_len_mean", "bwd_pkt_len_std", "flow_byts_s", "flow_pkts_s", "flow_iat_mean", "flow_iat_std", "flow_iat_max", "flow_iat_min", "fwd_iat_tot", "fwd_iat_mean", "fwd_iat_std", "fwd_iat_max", "fwd_iat_min", "bwd_iat_tot", "bwd_iat_mean", "bwd_iat_std", "bwd_iat_max", "bwd_iat_min", "fwd_psh_flags", "bwd_psh_flags", "fwd_urg_flags", "bwd_urg_flags", "fwd_header_len", "bwd_header_len", "fwd_pkts_s", "bwd_pkts_s", "pkt_len_min", "pkt_len_max", "pkt_len_mean", "pkt_len_std", "pkt_len_var", "fin_flag_cnt", "syn_flag_cnt", "rst_flag_cnt", "psh_flag_cnt", "ack_flag_cnt", "urg_flag_cnt", "cwe_flag_count", "ece_flag_cnt", "down_up_ratio", "pkt_size_avg", "fwd_seg_size_avg", "bwd_seg_size_avg", "fwd_byts_b_avg", "fwd_pkts_b_avg", "fwd_blk_rate_avg", "bwd_byts_b_avg", "bwd_pkts_b_avg", "bwd_blk_rate_avg", "subflow_fwd_pkts", "subflow_fwd_byts", "subflow_bwd_pkts", "subflow_bwd_byts", "init_fwd_win_byts", "init_bwd_win_byts", "fwd_act_data_pkts", "fwd_seg_size_min", "active_mean", "active_std", "active_max", "active_min", "idle_mean", "idle_std", "idle_max", "idle_min", "payload_len", 'label']
@@ -139,17 +138,17 @@ def getXy(data, random_seed, train_index_file=None, test_index_file=None, model_
 
 
 def get_xgboost_model():
-    raw_models = xgb.XGBClassifier(n_estimators=10000,
-                                   max_depth=15,
-                                   learning_rate=0.5,
-                                   min_child_weight=0,
-                                   # tree_method='gpu_hist',
-                                   # device='cuda:0',
-                                   tree_method="hist", device="cuda",
-                                   sampling_method='gradient_based',
-                                   reg_alpha=0.2,
-                                   reg_lambda=1.5,
-                                   random_state=42)
+    raw_models = xgb.XGBClassifier(
+                    n_estimators=1000,
+                    max_depth=15,
+                    learning_rate=0.5,
+                    min_child_weight=0,
+                    tree_method="hist",
+                    sampling_method='uniform',
+                    reg_alpha=0.2,
+                    reg_lambda=1.5,
+                    random_state=42
+                )
     return raw_models
 
 def validation_origin_bert(model, testing_loader, device, pred_value_check=False):

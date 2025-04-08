@@ -82,6 +82,27 @@ class BERTClass(torch.nn.Module):
         output = self.l3(output_2)
         return output
 
+class BERTCaptumClass(torch.nn.Module):
+    def __init__(self, output_numbers=13):
+        super(BERTCaptumClass, self).__init__()
+        self.l1 = transformers.BertModel.from_pretrained('bert-base-multilingual-cased',
+                                                         problem_type='multi_label_classification', num_labels=output_numbers, output_attentions=True)  # 5
+        self.config = self.l1.config
+        # self.l1 = AutoModelForSe uenceClassification.from_pretrained('bert-base-multilingual-uncased', problem_type='multi_label_classification', num_labels=5)
+        self.l2 = torch.nn.Dropout(0.3)
+        # self.l3 = torch.nn.Linear(768, 9)
+        self.l3 = torch.nn.Linear(768, output_numbers)
+
+    # def forward(self, x):
+        # _, output_1 = self.l1(**x, return_dict=False)
+    def forward(self, input_ids, attention_mask, token_type_ids):
+        # _, output_1 = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
+        # _, output_1, _ = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=False)
+        outputs = self.l1(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_dict=True)
+        output_1 = outputs.pooler_output  #
+        output_2 = self.l2(output_1)
+        output = self.l3(output_2)
+        return output
 
 class BERTMLPDataset(Dataset):
     def __init__(self, indexlist, dataframe, real_label, tokenizer, tabulardata, max_len):
@@ -294,6 +315,11 @@ def setting_bert_model(device, bert_model_path=None, output_numbers=13):
     else:
         model = BERTClass(output_numbers=output_numbers).to(device)
         model.load_state_dict(torch.load(f'{bert_model_path}', map_location=device))
+    return model
+
+def setting_bert_model_captum(device, bert_model_path=None, output_numbers=13):
+    model = BERTCaptumClass(output_numbers=output_numbers)
+    model.to(device)
     return model
 
 def setting_bert_MLP_model(device, bert_model_path=None, output_numbers=13, tmt="MLPNLP", tokenizer=None):

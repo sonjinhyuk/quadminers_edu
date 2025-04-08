@@ -4,12 +4,12 @@ current_file_path = os.path.abspath(__file__)
 parent_dir = os.path.dirname(current_file_path)
 sys.path.append(parent_dir)
 import torch
-from transformers import BertTokenizer
-from lime.lime_text import LimeTextExplainer
-from functools import partial
 from AI.AI_utils import data_load, set_device, setting_bert_model
 from XAI.xai_utils import argparse_xai
-
+import pickle
+import numpy as np
+from lime.lime_tabular import LimeTabularExplainer
+import pandas as pd
 def predict_prob_(texts, model, tokenizer, max_len, device):
     """
     LIME이 요구하는 예측 함수 형태에 맞춰, 문자열 리스트 -> 확률 벡터 (numpy array) 반환
@@ -46,29 +46,36 @@ def main(args):
     MAXLEN = int(args.MAXLEN)
 
     # Load data
-    tabular_data, nlp_data_label = data_load(base_dir=data_base_dir, tabular_data_name=tabular_data_name,
+    tabular_data, _ = data_load(base_dir=data_base_dir, tabular_data_name=tabular_data_name, getdatatype="tabular",
                                              bert_flie=bert_file, MAXLEN=MAXLEN)
-    nlp_data = nlp_data_label[0]
-    labels = nlp_data_label[1]
 
-    model_path = os.path.join(model_dir, f"{model_name}_nlp.pth")
+    model_path = os.path.join(model_dir, f"{model_name}_xgboost.pkl")
     if not os.path.exists(model_path):
-        model_path = os.path.join(model_dir.replace("../", ""), f"{model_name}_nlp.pth")
+        model_path = os.path.join(model_dir.replace("../", ""), f"{model_name}_xgboost.pkl")
 
-    output_numbers = len(set(labels))
-    bert_model = setting_bert_model(device, model_path, output_numbers=output_numbers)
-    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    # 모델 로드
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
 
-    # LIME 설정 및 예시 문장
-    test_sentence = nlp_data[0]
-    explainer = LimeTextExplainer(class_names=[str(i) for i in range(output_numbers)])
-    # partial로 predict 함수 래핑
-    wrapped_predict = partial(predict_prob_, model=bert_model, tokenizer=tokenizer, max_len=MAXLEN, device=device)
-    # LIME 설명 생성
-    explanation = explainer.explain_instance(test_sentence, wrapped_predict, num_features=10)
-    html = explanation.as_html()
-    with open("lime_explanation.html", "w", encoding="utf-8") as f:
-        f.write(html)
+    class_names = tabular_data['label'].unique()
+    class_names = np.sort(class_names)
+    X = tabular_data.iloc[:, :-1]
+    # LIME 설명기 생성
+    i = 0  # 분석할 샘플 인덱스
+    explainer = LimeTabularExplainer(
+        X.values,
+        feature_names=X.columns.tolist(),
+        class_names=class_names,  # 필요시 수정
+        mode="classification"
+    )
+    instance = X.iloc[i].to_numpy()
+    exp = explainer.explain_instance(
+        instance,
+        model.predict_proba,
+        num_features=10
+    )
+    exp.save_to_file("lime_tabular_explanation.html")
+
 
 if __name__ == "__main__":
     args = argparse_xai()
